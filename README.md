@@ -6,8 +6,7 @@ avs-offline is an offline video selling app. With this web app, you don't need t
 - React Router
 - React Swipeable
 - Material UI (MUI)
-- Sanity Client
-- Sanity Studio
+- Sanity CMS
 
 # Live demo
 https://avs-offline.netlify.app
