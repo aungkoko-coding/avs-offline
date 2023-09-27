@@ -1,0 +1,3 @@
+npx -y @sanity/cli init --template empty --create-project "Sanity Project" --dataset production
+
+pwd - 2242001Ap@*3
