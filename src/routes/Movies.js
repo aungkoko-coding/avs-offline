@@ -44,7 +44,6 @@ function Movies(props) {
         width: "100%",
         alignItems: "center",
         mb: 2,
-        px: { xs: 0.3, sm: 3, md: 5, lg: 7 },
       }}
     >
       <Box width="100%" mb={1.3}>
@@ -71,12 +70,7 @@ export default function MoviesRoute() {
     <React.Fragment>
       <DocumentHeader title="AVS | Movies" />
       <MoviesWithPagination />
-      <Box
-        position="relative"
-        width="100%"
-        p={1}
-        px={{ xs: 0.3, sm: 3, md: 5, lg: 7 }}
-      >
+      <Box position="relative" width="100%" py={1}>
         <Divider mt={2} />
         <Tags my={2} />
       </Box>

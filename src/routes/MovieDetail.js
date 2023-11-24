@@ -23,6 +23,7 @@ import DocumentHeader from "../components/util/DocumentHeader";
 import Price from "../components/util/Price";
 import WatchTrailerButton from "../components/util/WatchTrailerButton";
 import Review from "../components/util/Review";
+import { useQuery } from "@tanstack/react-query";
 
 const StyledDivider = styled((props) => <Divider flexItem {...props} />)(
   () => ({
@@ -49,11 +50,23 @@ const rottenAudienceScoreIconUrl =
 
 // WE NEED TO IMPLEMENT 404 ERROR
 export default function MovieDetail(props) {
-  const [movie, setMovie] = useState(null);
   const [isOnFullScreen, setIsOnFullScreen] = useState(false);
   const [isNotFound, setIsNotFound] = useState(false);
   const theme = useTheme();
   let slug = useParams().slug;
+  const { networkError, closeNetworkError, openNetworkError } =
+    useContext(AppContext);
+
+  const movieQuery = queryMovie(slug);
+  const {
+    data: movie,
+    isSuccess,
+    isError,
+  } = useQuery({
+    queryKey: [movieQuery],
+    queryFn: () => client.fetch(movieQuery),
+    enabled: !!slug,
+  });
 
   const {
     title,
@@ -72,8 +85,20 @@ export default function MovieDetail(props) {
     extraPosterImages,
   } = movie ?? {};
 
-  const { networkError, closeNetworkError, openNetworkError } =
-    useContext(AppContext);
+  useEffect(() => {
+    if (isSuccess) {
+      if (!movie) {
+        setIsNotFound(true);
+      }
+      if (networkError) closeNetworkError();
+    }
+  }, [isSuccess, closeNetworkError, movie]);
+
+  useEffect(() => {
+    if (isError) {
+      openNetworkError();
+    }
+  }, [isError, openNetworkError]);
 
   useEffect(() => {
     function callback() {
@@ -92,23 +117,6 @@ export default function MovieDetail(props) {
       window.removeEventListener("webkitfullscreenchange", callback);
     };
   }, []);
-
-  useEffect(() => {
-    if (slug) {
-      client
-        .fetch(queryMovie(slug))
-        .then((res) => {
-          if (networkError) {
-            closeNetworkError();
-          }
-          if (!res) {
-            setIsNotFound(true);
-          }
-          setMovie(res);
-        })
-        .catch(openNetworkError);
-    }
-  }, [slug]);
 
   return (
     <Box sx={{ p: 0.5, mt: 2 }}>

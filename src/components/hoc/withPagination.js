@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo, useContext } from "react";
+import React, { useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import { Stack, Pagination, PaginationItem, Button } from "@mui/material";
 import { client } from "../../lib/client";
 import { AppContext } from "../../context/AppContextProvider";
+import { useQuery } from "@tanstack/react-query";
 
 export default function withPagination(
   Component,
@@ -11,13 +12,11 @@ export default function withPagination(
   queryForPagination,
   showPaginationButtons
 ) {
-  return function (props) {
-    const [data, setData] = useState(null);
-    const [totalPages, setTotalPages] = useState(1);
+  return function () {
     const { itemsPerPage, openNetworkError, networkError, closeNetworkError } =
       useContext(AppContext);
 
-    let [searchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
     const paginateFor = searchParams.get("paginateFor");
     const currentPage =
       ((paginateFor === "movies" ||
@@ -26,30 +25,38 @@ export default function withPagination(
         parseInt(searchParams.get("p"))) ||
       1;
 
-    const memoizedQuery = useMemo(() => query(), []);
-    // const memoizedPaginationQuery = useMemo(() => queryForPagination(startIndex, endIndex), [startIndex, endIndex]);
+    const { data: totalPages, isError: isTotalPagesError } = useQuery({
+      queryKey: [query()],
+      queryFn: () => client.fetch(query()),
+      select: (data) => {
+        if (!data) {
+          return 1;
+        }
+        return parseInt(Math.ceil(data.length / itemsPerPage));
+      },
+    });
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = currentPage * itemsPerPage - 1;
+    const paginatedQuery = queryForPagination(startIndex, endIndex);
+    const { data, isError: isPaginatedDataError } = useQuery({
+      queryKey: [paginatedQuery],
+      queryFn: () => {
+        return client.fetch(paginatedQuery);
+      },
+    });
 
     useEffect(() => {
-      if (itemsPerPage) {
-        let startIndex = (currentPage - 1) * itemsPerPage;
-        let endIndex = currentPage * itemsPerPage - 1;
-        window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-        //console.log(startIndex, endIndex, endIndex - startIndex);
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    }, [data]);
 
-        client
-          .fetch(queryForPagination(startIndex, endIndex))
-          .then((res) => setData(res))
-          .then(() => client.fetch(memoizedQuery))
-          .then((res) => {
-            // We need to close network error status when successfully re-fetched data
-            if (networkError) {
-              closeNetworkError();
-            }
-            setTotalPages(parseInt(Math.ceil(res.length / itemsPerPage)));
-          })
-          .catch(openNetworkError);
+    useEffect(() => {
+      if (isTotalPagesError || isPaginatedDataError) {
+        openNetworkError();
+      } else {
+        if (networkError) closeNetworkError();
       }
-    }, [currentPage, itemsPerPage]);
+    }, [isTotalPagesError, isPaginatedDataError, networkError]);
 
     return (
       <Stack sx={{ width: "100%", alignItems: "center", mt: 2 }}>

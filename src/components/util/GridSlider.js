@@ -189,7 +189,7 @@ export default function GridSlider({ children, speed, renderNavButtons }) {
   });
 
   return (
-    <Box mx={{ xs: 0, sm: 3, md: 5, lg: 7 }}>
+    <Box>
       {typeof renderNavButtons === "function" &&
         renderNavButtons(next, prev, paused, togglePause)}
       <Box

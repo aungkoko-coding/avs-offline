@@ -29,7 +29,11 @@ export default function MovieItem(props) {
           component="img"
           src={posterImgUrl}
           loading="lazy"
-          sx={{ height: "85%", lineHeight: 1, verticalAlign: "baseline" }}
+          sx={{
+            height: { xs: 140, sm: 180, md: 200, lg: 220, xl: 230 },
+            lineHeight: 1,
+            verticalAlign: "baseline",
+          }}
         />
         <CardContent
           sx={{
